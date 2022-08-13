@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, redirect, url_for, render_template
 import os
-from tensorflow.keras.models import load_model
+import keras
+# from keras.models import load_model
 import numpy as np
 import json
 from keras_preprocessing import image
@@ -16,7 +17,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 def index():
     return render_template("index.html")
 
-@app.route('/upload', methods=["POST"])
+@app.route('/predict', methods=["POST"])
 def upload():
     file = request.files['file']
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
@@ -73,7 +74,7 @@ def classify(path):
     labels = json.load(open('model/labels_map.json'))
     class_names = list(labels.keys())
 
-    savedModel = load_model('model/model.h5')
+    savedModel = keras.models.load_model('model/model.h5')
     pred = savedModel.predict(images)
 
     proba = np.max(pred[0], axis=-1)
