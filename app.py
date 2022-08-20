@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, redirect, url_for, render_template
 import os
 import keras
 # from keras.models import load_model
+import tensorflow as tf
 import numpy as np
 import json
 from keras_preprocessing import image
@@ -74,8 +75,19 @@ def classify(path):
     labels = json.load(open('model/labels_map.json'))
     class_names = list(labels.keys())
 
-    savedModel = keras.models.load_model('model/model.h5')
-    pred = savedModel.predict(images)
+    # savedModel = keras.models.load_model('model/model.h5')
+    # pred = savedModel.predict(images)
+
+    with open('model/model.json', 'r') as json_file:
+        json_savedModel= json_file.read()#load the model architecture 
+    model_j = keras.models.model_from_json(json_savedModel)
+    model_j.load_weights('model/model_weights.h5')
+    model_j.compile(
+        loss='categorical_crossentropy',
+        optimizer=tf.keras.optimizers.Adam(),
+        metrics=['accuracy']
+    )
+    pred = model_j.predict(images)
 
     proba = np.max(pred[0], axis=-1)
     predicted_class = class_names[np.argmax(pred[0], axis=-1)]
@@ -85,4 +97,5 @@ def classify(path):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
